@@ -9,7 +9,7 @@ import { Bus } from "@opencode-ai/core/bus"
 import { Job } from "@opencode-ai/core/job"
 import { Location } from "@opencode-ai/core/location"
 import { LocationServiceMap } from "@opencode-ai/core/location-service-map"
-import type { LocationServices } from "@opencode-ai/core/location-services"
+import { stubLocations } from "./fixture/location"
 import { Project } from "@opencode-ai/core/project"
 import { AbsolutePath } from "@opencode-ai/core/schema"
 import { Session } from "@opencode-ai/core/session"
@@ -20,7 +20,7 @@ import { SessionProjector } from "@opencode-ai/core/session/projector"
 import { SessionExecution } from "@opencode-ai/core/session/execution"
 import { SessionRunnerModel } from "@opencode-ai/core/session/runner/model"
 import { SessionStore } from "@opencode-ai/core/session/store"
-import { DateTime, Effect, Layer, LayerMap, Stream } from "effect"
+import { DateTime, Effect, Layer, Stream } from "effect"
 import { testEffect } from "./lib/effect"
 import { globalProjectLayer } from "./lib/project"
 
@@ -49,18 +49,9 @@ const models = Layer.mock(SessionRunnerModel.Service)({
       }),
     ),
 })
-const locations = Layer.effect(
-  LocationServiceMap.Service,
-  LayerMap.make(
-    () =>
-      // The test only needs the compaction location service used by Session.compact.
-      // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion
-      SessionCompaction.layer.pipe(
-        Layer.provide(client),
-        Layer.provide(config),
-        Layer.provide(models),
-      ) as unknown as Layer.Layer<LocationServices>,
-  ),
+// The test only needs the compaction location service used by Session.compact.
+const locations = stubLocations(
+  SessionCompaction.layer.pipe(Layer.provide(client), Layer.provide(config), Layer.provide(models)),
 )
 const it = testEffect(
   AppNodeBuilder.build(
